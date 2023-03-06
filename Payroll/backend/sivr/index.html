@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head>
+</head>
+	<@
+	var rec=session.dbms.query({"alias":"presence","query":"select getdate() as d","error":function(err){
+		print(err);
+	}});
+	if (rec.next()){
+		print(rec.data()[0]);
+	}
+	@>
+<body>
+</body>
+</html>

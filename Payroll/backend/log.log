@@ -1,0 +1,5 @@
+I:ENV Root:C:/Inovo/Payroll/backend/
+I:Loading:/vippayrolllookup.conf.js
+I:RegisterDbConnection:payrollvip
+I:RegisterDbConnection:registered->payrollvip
+I:Loaded:/vippayrolllookup.conf.js

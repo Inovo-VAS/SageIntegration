@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<style type="text/css">
+table {
+  border-collapse: collapse;
+}
+
+th,td {
+  border: 1px solid #ddd;
+}
+</style>
+<body style="font-family: arial">
+<table>
+<@
+	
+	var recs=request.DBMS().DbQuery("presence","SELECT * FROM SQLPR1.PTOOLS.");
+	var columns=recs.Columns;
+	@><tr><@
+	for(var coli=0;coli<columns.length;coli++) {
+		@><th><@ Print(columns[coli]); @></th><@
+	}
+	@></tr><@
+	while (recs.MoveNext()) {
+		var rc=recs.Record;
+		@><tr  style="bolder: 1px solid"><@
+			var data=rc.Data;
+			for(var coli=0;coli<data.length;coli++) {
+				@><td><@ Print(data[coli]); @></td><@
+			}
+		@></tr><@
+	}
+@>
+</table>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<style type="text/css">
+table {
+  border-collapse: collapse;
+}
+
+th,td {
+  border: 1px solid #ddd;
+}
+</style>
+<body style="font-family: arial">
+<table>
+<@
+	var clientid=request.Parameters.Standard.String("IVRCODE")+"";
+	if (clientid==="") {
+	@><th>NO IRV CODE PROVIDED</th><@
+	} else {
+		var recs=request.DBMS().DbQuery("payrollvip","SELECT ltrim(rtrim([comp_companyid])) as [comp_companyid] ,ltrim(rtrim([Comp_IVR])) AS [Comp_IVR],ltrim(rtrim([Comp_Idcust])) AS [Comp_Idcust],case when  ltrim(rtrim([Comp_Idcust])) in ('PAS0393','Z00004') THEN 1 ELSE 0 END AS [Comp_IsDemo] ,ltrim(rtrim([Comp_Name])) as [Comp_Name] ,ltrim(rtrim(cast([comp_status] as varchar(20)))) as [comp_status],comp_system ,case when coalesce((select count(*) FROM [Reports].[dbo].[vCompany_Presence] WHERE Comp_IVR=(COALESCE(@@CLIENTID@@,''))),0)=1 THEN case when comp_africa=1 then 'Africa' else  ltrim(rtrim(case when coalesce([comp_system],'')='' then 'No Product' else coalesce([comp_system],'') end)) end else 'Duplicate IVR' end as [ivrcomp_system] ,ltrim(rtrim([comp_africa])) as [comp_africa],ltrim(rtrim([comp_platinum])) as [comp_platinum],ltrim(rtrim([comp_flex])) as [comp_flex],ltrim(rtrim([comp_new])) as [comp_new],ltrim(rtrim([comp_bp])) as [comp_bp],ltrim(rtrim([comp_creditcontrol])) as [comp_creditcontrol] FROM [Reports].[dbo].[vCompany_Presence] WHERE Comp_IVR=(COALESCE(@@CLIENTID@@,''))",{"CLIENTID":clientid});
+		var columns=recs.Columns;
+		@><tr><@
+		for(var coli=0;coli<columns.length;coli++) {
+			@><th><@ Print(columns[coli]); @></th><@
+		}
+		@></tr><@
+		while (recs.MoveNext()) {
+			var rc=recs.Record;
+			@><tr  style="bolder: 1px solid"><@
+				var data=rc.Data;
+				for(var coli=0;coli<data.length;coli++) {
+					@><td><@ Print(data[coli]); @></td><@
+				}
+			@></tr><@
+		}
+	}
+@>
+</table>
+</body>
+</html>

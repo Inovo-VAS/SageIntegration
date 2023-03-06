@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+[@include /webactions/head.html@]
+[@include /alertify/head.html@]
+[@include /alertify/head.html@]
+[@include /fonts/material/head.html@]
+[@include /fonts/roboto/head.html@]
+<style type="text/css">
+table {
+  border-collapse: collapse;
+}
+
+th,td {
+  border: 1px solid #ddd;
+}
+</style>
+</head>
+<body style="font-family: arial">
+<script>
+function updateModule(modbtn){
+	alertify.confirm("Update module","Confirm updating module",
+  function(){
+    alertify.success($(modbtn).attr("id"));
+  },
+  function(){
+    //alertify.error('Cancel');
+  });
+	//alert($(modbtn).html());
+}
+
+function updateProduct(prodbtn){
+	alert($(prodbtn).html());
+}
+
+</script>
+
+<@
+
+var currentprod="";
+
+var accnr=session.in.parameters().parameter("account").join("");
+
+
+if (accnr!==""){
+	var reccimrec=session.dbms.query({"alias":"payrollvip","query":`SELECT TOP 1 ltrim(rtrim([comp_companyid])) as [comp_companyid] ,ltrim(rtrim([Comp_IVR])) AS [Comp_IVR],ltrim(rtrim([Comp_Idcust])) AS [Comp_Idcust],case when  ltrim(rtrim([Comp_Idcust])) in ('PAS0393','Z00004') THEN 1 ELSE 0 END AS [Comp_IsDemo] ,ltrim(rtrim([Comp_Name])) as [Comp_Name] ,ltrim(rtrim(cast([comp_status] as varchar(20)))) as [comp_status] ,
+case when 
+	coalesce((select count(*) FROM [Reports].[dbo].[vCompany_Presence] WHERE Comp_IVR=(COALESCE(@ACCOUNT@,''))),0)=1 THEN case when comp_africa=1 then 'Africa' else  ltrim(rtrim(case when coalesce([comp_system],'')='' then 'No Product' else coalesce([comp_system],'') end)) end else 'Duplicate IVR' end as [comp_system] ,ltrim(rtrim([comp_africa])) as [comp_africa],ltrim(rtrim([comp_platinum])) as [comp_platinum],ltrim(rtrim([comp_flex])) as [comp_flex],ltrim(rtrim([comp_new])) as [comp_new],ltrim(rtrim([comp_bp])) as [comp_bp],ltrim(rtrim([comp_creditcontrol])) as [comp_creditcontrol] FROM [Reports].[dbo].[vCompany_Presence] WHERE Comp_IVR=(COALESCE(@ACCOUNT@,''))`,"error":function(err){
+		print(err);
+	}},session.in.parameters());
+	if (reccimrec!==undefined && reccimrec!==null && reccimrec.next()){
+		var data=reccimrec.data();
+		@><table><tr><@
+		reccimrec.columns().forEach((col,coln)=>{
+			@><th><@ print(col); @></th><@
+			if (col.toLowerCase()==="comp_system"){
+				currentprod=` AND PRODCODE='${data[coln]}' `;
+			}
+		});
+		@></tr><@
+		
+		@><tr><@
+		data.forEach((dta)=>{
+			@><td><@ print(dta); @></td><@
+		});
+		@></tr></table><@
+	}
+	
+	var recaccucid=session.dbms.query({"alias":"presence","query":`SELECT TOP 1 UCID AS [LATESTUCID],NEXTVDN FROM [SQLPR1].[PTOOLS].[SIVR_PAYROLL_UCID_CLIENTID_SESSION] WHERE CLIENTID=@ACCOUNT@ ORDER BY ID DESC`},session.in.parameters());
+	if (recaccucid!==undefined && recaccucid!==null && recaccucid.next()){
+		var data=recaccucid.data();
+		@><table><tr><@
+		recaccucid.columns().forEach((col,coln)=>{
+			@><th><@ print(col); @></th><@
+		});
+		@></tr><@
+		
+		@><tr><@
+		data.forEach((dta)=>{
+			@><td><@ print(dta); @></td><@
+		});
+		@></tr></table><@
+	}
+}
+@><table><@
+var mode=session.in.parameters().parameter("mode").join("");
+println(mode);
+
+var sqlmodfields="ID,MODCODE,AUDIOVDN,DESTINATIONVDN,NEWCLIENTDESTINATIONVDN,PROJECTCLIENTDESTINATIONVDN,ELITECLIENTDESTINATIONVDN,RENEWALVDN"
+var sqlmod="select  "+sqlmodfields+" from  [PTOOLS].[SIVR_PAYROLL_PRODUCT_MODULE] WHERE PRODCODE=@PRODCODE@";
+
+var modlabels={"AUDIOVDN":"Audio VDN","DESTINATIONVDN":"Destination VDN","NEWCLIENTDESTINATIONVDN":"New Client VDN","ELITECLIENTDESTINATIONVDN":"Elite Client VDN","PROJECTCLIENTDESTINATIONVDN":"Project Client VDN","RENEWALVDN":"Renewal VDN"};
+
+function PrepMod(modrec){
+	if (modrec.isFirst()){
+		@><th>MODULES</td><@
+	}
+	@><tr><td nowrap="nowrap" style="vertical-align:top"><@
+		print(modrec.field("MODCODE"));
+	@></td><td style="vertical-align:top"><@
+		var cols=modrec.columns();
+		
+		var data=modrec.data();
+		if (data.length>0){
+			@><table width="100%"><@
+				@><tr><@
+				cols.forEach((col,coln)=>{
+				if (col==="ID") return;
+				if (col==="MODCODE") return;
+				if (col==="CREATESTAMP") return;
+				if (col==="PRODCODE") return;
+					@><@print(`<th align="right">${modlabels[col]}</th>`);@><@
+				});
+				
+				@></tr><@
+				
+				@><tr><@
+				cols.forEach((col,coln)=>{
+				if (col==="ID") return;
+				if (col==="MODCODE") return;
+				if (col==="CREATESTAMP") return;
+				if (col==="PRODCODE") return;
+					if (mode==="edit"){
+						@><@print(`<td><input name="${col}" type="text" value="${data[coln]==null?"":data[coln]}"/></td>`);@><@
+					} else {
+						@><@print(`<td>${data[coln]==null?"":data[coln]}</td>`);@><@
+					}
+				});
+				
+				@></tr><@
+				
+			@></table><@
+			if (mode==="edit"){
+				@><button modid="<@print((modrec.field("ID")+""));@>" onclick="updateModule(this);">apply</button><@
+			}
+		}
+	@></td></tr><@
+}
+
+function PrepProduct(prodrec,labels){
+	@><td nowrap="nowrap" style="vertical-align:top"><@
+		print(prodrec.field("PRODCODE"));
+	@></td><td style="vertical-align:top"><@
+		var cols=prodrec.columns();
+		
+		var data=prodrec.data();
+		if (data.length>0){
+			@><table width="100%"><@
+				cols.forEach((col,coln)=>{
+					if (coln===0){
+						@><tr><th colspan="2">SETTINGS</td></tr><tr><td><@
+					}
+				if (col==="ID") return;
+				if (col==="PRODCODE") return;
+				if (col==="CREATESTAMP") return;
+					if (mode==="edit"){
+						@><@print(`<tr><th align="right">${labels[col]}</th><td><input name="${col}" type="text" value="${data[coln]==null?"":data[coln]}"/></td></tr>`);@><@
+					} else {
+						@><@print(`<tr><th align="right">${labels[col]}</th><td>${data[coln]==null?"":data[coln]}</td></tr>`);@><@
+					}
+				});
+				
+			@></table><@
+			if (mode==="edit"){
+				@><button proid="<@print((prodrec.field("ID")+""));@>" onclick="updateProduct(this)">apply</button><@
+			}
+		}
+		
+		
+	@></td><td><@
+		var modrec=session.dbms.query({"alias":"presence","query":sqlmod},{"PRODCODE":prodrec.field("PRODCODE")});
+		
+		if (modrec!==undefined && modrec!=null){
+			@><table><@
+			while(modrec.next()){
+				@><tr id="mod<@print((modrec.field("ID")+""));@>"><@ PrepMod(modrec); @></tr><@
+			}
+			@></table><@
+			modrec.close();
+		}
+	
+	@></td><@
+}
+var prodlabels={"PRODDESCRIPTION":"Description","AUDIOVDN":"Audio VDN","DESTINATIONVDN":"Destination VDN","NEWCLIENTDESTINATIONVDN":"New Client VDN","ELITECLIENTDESTINATIONVDN":"Elite Client VDN","PROJECTCLIENTDESTINATIONVDN":"Project Client VDN","RENEWALVDN":"Renewal VDN"};
+var sqlfields="ID,PRODCODE,PRODDESCRIPTION,AUDIOVDN,DESTINATIONVDN,NEWCLIENTDESTINATIONVDN,ELITECLIENTDESTINATIONVDN,PROJECTCLIENTDESTINATIONVDN,RENEWALVDN"
+var sql="select "+sqlfields+" from  [PTOOLS].[SIVR_PAYROLL_PRODUCT] WHERE ID IN (13,14) "+currentprod+" order by ID";
+	var rec=session.dbms.query({"alias":"presence","query":sql});
+	if (rec!==undefined && rec!==null){
+		@><tr><th align="left">PRODUCT</th></tr><@
+		
+		while(rec.next()){
+			@><tr><@ PrepProduct(rec,prodlabels); @></tr><@ 
+		}
+		rec.close();
+	}
+	
+	@>
+<@
+var sql="select  "+sqlfields+" from  [PTOOLS].[SIVR_PAYROLL_PRODUCT] WHERE ID NOT IN (13,14) "+currentprod+" order by ID"
+	var rec=session.dbms.query({"alias":"presence","query":sql});
+	if (rec!==undefined && rec!==null){
+		
+		while(rec.next()){
+			@><tr id="prod<@print((rec.field("ID")+""));@>"><@ PrepProduct(rec,prodlabels); @></tr><@
+		}
+	}
+	
+	@>
+</table>
+</body>
+</html>

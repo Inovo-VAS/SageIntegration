@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+[@include /webactions/head.html@]
+[@include /alertify/head.html@]
+[@include /alertify/head.html@]
+[@include /fonts/material/head.html@]
+[@include /fonts/roboto/head.html@]
+<style type="text/css">
+table {
+  border-collapse: collapse;
+}
+
+th,td {
+  border: 1px solid #ddd;
+}
+</style>
+</head>
+<body style="font-family: arial">
+<table>
+<@
+var accnr=session.in.parameters().parameter("ACCOUNT").join("");
+var ucid=session.in.parameters().parameter("UCID").join("");
+
+if (accnr!=="" && ucid===""){
+	
+}
+
+var sqlaccouting=accnr!==""?(`SELECT '' as dummy, SupportGroup,IncidentTypeID,Max(NoOfSupportDaysAvailable) AS NoOfSupportDaysAvailable,Max(NoOfReinstatementPeriodDaysAvailable) as NoOfReinstatementPeriodDaysAvailable  FROM [Pastel].[dbo].[Func_Presense_Contract_LookUp_For_Support] (@ACCOUNT@) WHERE SupportGroup<>'' GROUP BY SupportGroup, IncidentTypeID`):ucid!==""?`SELECT * FROM [SQLPR1].[PTOOLS].[SIVR_ACCOUNTING_UCID_CLIENTID_SESSION] WHERE UCID=@UCID@`:`SELECT [ID]
+      ,[SUPPORT_GRPS]
+      ,[INCIDENTTYPES]
+      ,[EXTENSION]
+      ,[AUDIOVDN]
+      ,[AUDIODESCRIPTION]
+	  ,[REGISTRATIONVDN]
+	  ,[SUPPORTVDN]
+      ,[SECTION]
+  FROM [SQLPR1].[PTOOLS].[SIVR_ACCOUNTING_INCIDENT_SUPPORTGRP_EXTENSIONS] ORDER BY SECTION desc,SUPPORT_GRPS,INCIDENTTYPES`;
+  
+  var recacc=session.dbms.query({"alias":accnr!==""?"pastel":"presence","query":sqlaccouting,"error":function(e){
+	print(e);
+  }},session.in.parameters());
+  if (recacc!==undefined && recacc!==null){
+		var cols=recacc.columns();
+		@><tr><@
+		cols.forEach((col,coln)=>{
+			@><th><@ if(coln>0) {print(col);} @></th><@
+		});
+		@></tr><@
+		
+		while(recacc.next()){
+			var data=recacc.data();
+			@><tr><@
+			data.forEach((dat,datn)=>{
+				@><td><@ if(datn>0) {print(dat);}@></td><@
+			});
+			@></tr><@
+		}
+  }
+@>
+</table>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<style type="text/css">
+table {
+  border-collapse: collapse;
+}
+
+th,td {
+  border: 1px solid #ddd;
+}
+</style>
+<body style="font-family: arial">
+<table>
+<@
+	<@
+	var rec=session.dbms.query({"alias":"presence","query":"select * from [PTOOLS].[SIVR_PAYROLLDESTINATIONS]","error":function(err){
+		print(err);
+	}});
+	if (rec!==undefined && rec!==null){
+		@><tr  style="bolder: 1px solid"><@ rec.columns().forEach((col)=>{
+			@><th><@print(col);@></th><@
+		}); @></tr><@
+		while(rec.next()){
+			@><tr  style="bolder: 1px solid"><@ rec.data().forEach((dat)=>{
+			@><td><@print(dat);@></td><@
+		}); @></tr><@
+		}
+	}
+	@>
+</table>
+</body>
+</html>
